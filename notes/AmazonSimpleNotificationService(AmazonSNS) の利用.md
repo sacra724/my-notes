@@ -84,7 +84,7 @@
 * コマンドプロンプトで、次のコマンドを入力します。myapnsappcert.cer を6.でダウンロードした証明書の名前に置き換えます。
 
 ```console
-	openssl x509 -in myApnsAppCert.cer -inform DER -out myApnsAppCert.pem
+openssl x509 -in myApnsAppCert.cer -inform DER -out myApnsAppCert.pem
 ```
 
 新しく作成した .pem ファイルは、モバイルプッシュ通知メッセージを送信するように Amazon SNS を設定するために使用します。
@@ -107,7 +107,7 @@
 * パスワードが出てきたら7-1.で設定したパスワードを打ち込む
 
 ```comandline
-	openssl pkcs12 -in myApnsAppPrivateKey.p12 -out myApnsAppPrivateKey.pem -nodes -clcerts
+openssl pkcs12 -in myApnsAppPrivateKey.p12 -out myApnsAppPrivateKey.pem -nodes -clcerts
 ```
 
 ***
@@ -117,7 +117,7 @@
 * コマンドプロンプトで、次のコマンドを入力します。myapnsappcert.pem と myapnsappprivatekey.pem をそれぞれ証明書とプライベートキーの名前に置き換えます。
 
 ```comandline
-	openssl s_client -connect gateway.sandbox.push.apple.com:2195 -cert myApnsAppCert.pem -key myApnsAppPrivateKey.pem
+openssl s_client -connect gateway.sandbox.push.apple.com:2195 -cert myApnsAppCert.pem -key myApnsAppPrivateKey.pem
 ```
 
 * パスワードが出てきたら7-1.で設定したパスワードを打ち込む
@@ -141,47 +141,47 @@
 AppDelegate.swift
 
 ```swift
-	import UIKit
-	import UserNotifications
+import UIKit
+import UserNotifications
 
 
-	@UIApplicationMain
-	class AppDelegate: UIResponder, UIApplicationDelegate {
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
 
-	var window: UIWindow?
+var window: UIWindow?
 
 
-	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
 
-		// APNs
-		UNUserNotificationCenter.current().requestAuthorization(
-			options: [.badge, .alert, .sound]) {(accepted, error) in
-			if accepted {
-				print("Notification access accepted !")
-				// デバイストークンを登録
-				UIApplication.shared.registerForRemoteNotifications()
-			}
-			else{
-				print("Notification access denied.")
-			}
+	// APNs
+	UNUserNotificationCenter.current().requestAuthorization(
+		options: [.badge, .alert, .sound]) {(accepted, error) in
+		if accepted {
+			print("Notification access accepted !")
+			// デバイストークンを登録
+			UIApplication.shared.registerForRemoteNotifications()
 		}
-
-		return true
+		else{
+			print("Notification access denied.")
+		}
 	}
 
-	// Remote Notification のエラーを受け取る
-	func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-		print(error)
-	}
+	return true
+}
 
-	// Remote Notification の device token を表示
-	func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-		var deviceToken = String(format: "%@", deviceToken as CVarArg) as String
-		print("deviceToken = \(deviceToken)")
+// Remote Notification のエラーを受け取る
+func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+	print(error)
+}
 
-	}
-	...
-	}
+// Remote Notification の device token を表示
+func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+	var deviceToken = String(format: "%@", deviceToken as CVarArg) as String
+	print("deviceToken = \(deviceToken)")
+
+}
+...
+}
 ```
 
 * 実機に繋いだ状態でRunします（simulator不可）
@@ -208,12 +208,12 @@ AppDelegate.swift
 * 恐らく下記あたりが必要（AWS serviceへのアクセスはAWS Cognitoを使うのがオススメだよって言ってる）
 
 ```console
-	target :'myAppName' do
-	pod 'AWSCore'
-	pod 'AWSCognito'
-	pod 'AWSCognitoIdentityProvider'
-	pod 'AWSSNS'
-	end
+target :'myAppName' do
+pod 'AWSCore'
+pod 'AWSCognito'
+pod 'AWSCognitoIdentityProvider'
+pod 'AWSSNS'
+end
 ```
 
 > We recommend using Amazon Cognito as your credential provider to access AWS services from your mobile app. Amazon Cognito provides a secure mechanism to access AWS services without having to embed credentials in your app. To learn more, see Amazon Cognito for iOS.
