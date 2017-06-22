@@ -30,7 +30,7 @@ AmazonSNSとAPNsを用いてトピック/エンドポイントによるプッシ
 プッシュ通知メッセージを受信するためにアプリケーションを APNS に登録すると、デバイストークン (64 バイトの 16 進値) が生成されます。
 
 - Xcodeでプロジェクトを開く
-- プロジェクトの「TARGETS」->「General」にある「Bundle identifier」を 3. App IDの作成で決めた Bundle ID にします
+- プロジェクトの「TARGETS」->「General」にある「Bundle identifier」をApp IDの作成で決めた Bundle ID にします
 
 	>Projectで作ったプロジェクト名とアプリ名とが合わない場合、App ID で作成した Bundle ID とプロジェクトの名前が合わないなどは「TARGETS」「Info」の Bundle identifier をマクロを消すことで直接書き込みます。
 	>例えばApp IDで com.hoge.hage と設定されていても、プロジェクトでは com.hoge.Hage になってしまっているケースがあります。
@@ -95,27 +95,38 @@ func application(_ application: UIApplication, didRegisterForRemoteNotifications
 
 ### 2. Amazon SNS Platform Applicationの作成
 
-- まずは「モバイルデバイスへのメッセージの直接的な送信」まではAmazonSNSコンソールからできるのでそこまでやる
+- [Amazon SNS モバイルプッシュの使用](https://goo.gl/dvcSFE)を参考に、「モバイルデバイスへのメッセージの直接的な送信」まではAmazonSNSコンソールからできるのでそこまでやってみましょう
 - Platform Applicationを作成した際に設定されるApplication ARN は AWS SDKの実装内で使用します。
 
 参考:
 
- - [Amazon SNS モバイルプッシュの使用](https://goo.gl/dvcSFE)
  - [amazon sns で、iOS,Androidにpush通知する方法 - Qiita](https://goo.gl/NcaGcZ)
 
 ### 3. SNSでトピックを設定
+「2. Amazon SNS Platform Applicationの作成」でコンソールからメッセージの個別送信はできるようになりました。
+次はトピックを利用したプッシュ通知の送信をやってみます。
 
 - トピックを作成
 - トピックへのサブスクライブ
 - トピックへの発行
 
-下記に沿って行う
+下記に沿って行います
 [Amazon Simple Notification Service の使用開始](Amazon Simple Notification Service - http://docs.aws.amazon.com/ja_jp/sns/latest/dg/GettingStarted.html)
-
-### 4. 
 
 
 ### 3. アプリ(Xcode)とSNSとAPNsを連携させる
+「3. SNSでトピックを設定」で作成したトピックを使って自前のAPI経由でプッシュ通知を配信します。
+
+下記の流れでプッシュ通知を配信します。
+
+1. アプリでプッシュ通知を許可する
+2. 端末をトピックに登録する
+	1. tokenをアプリからAPIに送り、Endpointを作成
+	2. APIでEndpointをApplication Plat Formに登録
+	3. APIでEndpointでTopicをサブスクライブ
+3. APIでメッセージをTopicに送信する
+4. Topicをサブスクライブしている端末にプッシュ通知が届く
+
 #### 3-1. アプリ(Xcode)の記述
 
 - CocoaPodsでプロジェクトに必要なAmazon SDKをimportする
@@ -152,44 +163,232 @@ Amazon SNS を使用するときは、所有者としてトピックを作成し
 AWS には、さまざまなプログラミング言語およびプラットフォーム (Java、Python、Ruby、.NET、iOS、Android など) のライブラリとサンプルコードで構成された SDK (ソフトウェア開発キット) が用意されています。SDK は、Amazon SNS および AWS へのプログラムによるアクセスを作成するのに便利です。例えば、SDK は要求への暗号を使用した署名、エラーの管理、要求の自動的な再試行などのタスクを処理します。AWS SDK のダウンロードやインストールなどの詳細については、「Tools for Amazon Web Services」ページを参照してください。
 
 
-- ###### Amazon SNSクエリ API
-サービスに HTTPS リクエストを直接発行できる Amazon SNS のクエリ API を使用して、Amazon SNS と AWS にプログラムからアクセスできます。詳細については、[Amazon Simple Notification Service API Reference](http://docs.aws.amazon.com/ja_jp/sns/latest/api/API_Operations.html) を参照してください。
+- ###### Amazon SNSクエリ API（この資料内ではこちらを利用）
+サービスに HTTPS リクエストを直接発行できる Amazon SNS のクエリ API を使用して、Amazon SNS と AWS にプログラムからアクセスできます。
 
+##### Amazon SNSクエリ APIを利用しAPIを記述
+利用できるメソッドやエラーの詳細については、[AWS SDK for PHP 3.x - Amazon Simple Notification Service](http://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sns-2010-03-31.html)、[Amazon Simple Notification Service API Reference](http://docs.aws.amazon.com/ja_jp/sns/latest/api/API_Operations.html) を参照。
 
-
-
+APIは `php`で記述します。フレームワークに `phalcon`を利用しています。
 
 ---
 
-- tokenの有効、無効をチェック
-- 配信数やリクエストのサイズ、配信失敗数
+* platformApplicationにdeviceTokenを投げてEndpointを得る：`createEndpoint()`
 
-- SNSで「Create new topic」
-- 「Topic name」に「login-notification」など適当な名前を入力
-- TopicのARNが得られる
-- `arn:aws:sns:region:account_ID:topic_name`
+参考：[CreatePlatformEndpoint](http://docs.aws.amazon.com/ja_jp/sns/latest/api/API_CreatePlatformEndpoint.html)
+
+```php
+
+$result = $client->createPlatformEndpoint([
+	'PlatformApplicationArn' => $platformApplicationArn,
+	'Token' => $deviceToken,
+	'CustomUserData' => <'custom data'>,  //be in UTF-8 format and less than 2KB.
+	'Attributes' => ['Enabled' => 'true'],
+]);
+
+$endpointArn = $result['EndpointArn'];
+
+```
+
+---
+
+* トピックを作成する：`createEndpoint()`
+
+参考：[CreatePlatformEndpoint](http://docs.aws.amazon.com/ja_jp/sns/latest/api/API_CreatePlatformEndpoint.html)
+
+```php
+
+$result = $client->createTopic([
+	'Name' => 'test-topic',
+]);
+
+$topicArn = $result['TopicArn'];
+
+```
+
+---
+
+* トピックをサブスクライブする：`subscribe()`
+
+参考：[Subscribe](http://docs.aws.amazon.com/ja_jp/sns/latest/api/API_Subscribe.html)
+
+```php
+
+$result = $client->subscribe([
+	'TopicArn' => $topicArn',
+	'Endpoint' => $endpointArn,
+	'Protocol' => 'application',
+]);
+
+```
+
+---
+
+* 投稿する：`publish()`
+
+参考：[リモート通知のペイロード](https://developer.apple.com/jp/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/TheNotificationPayload.html)
+
+送信するメッセージの形式は、送信先が単一のプロトコルの場合は `string`でも可。
+
+ただJSON形式のほうが何かと便利なので、JSONで記述する。
+
+```php
+
+$result = $client->publish([
+	'TopicArn' => $topicArn,
+	'MessageStructure' => 'json',
+	'Message' => json_encode([
+		//default形式は必須
+		'default' => $body,
+
+		//develop用のペイロードキー
+		'APNS_SANDBOX' => json_encode([
+			'aps' => [
+				'alert' => [
+					'title' => $title,
+					'body'  => $body,
+				],
+				'badge' => 1,
+				'sound' => 'bingbong.aiff',
+				'test_id' => 1,
+			]
+		]),
+
+		//production用のペイロードキー
+		'APNS' => json_encode([
+			'aps' => [
+				'alert' => [
+					'title' => '',
+					'body'  => '',
+				],
+				'badge' => 1,
+				'sound' => 'bingbong.aiff',
+				'test_id' => 1,
+			]
+		]),
+	]),
+]);
+
+```
+
+---
+
+まとめ
+
+```php
+
+<?php /**
+*
+*/
+use Phalcon\Di;
+use Aws\Sns\SnsClient;
+use Aws\Sns\Exception\SnsException;
+
+class SNSWrapper
+{
+	protected $snsClient   = null;
+	protected $deviceToken = null;
+	protected $PlatformApplicationArn = '<YOUR PLATFORM ARN>';
+
+	public function __construct() {
+		// Instantiate the client.
+		$this->snsClient = new SnsClient([
+			'version' => 'latest',
+			'region'  => 'ap-northeast-1',
+			'credentials' => '<YOUR CREDENTIALS>'
+		]);
+	}
+
+
+	/**
+	* platformApplicationにdeviceTokenを登録する
+	*
+	* @param str $token, str $userId
+	* @throws throw new Exception
+	* @return str $endpointArn
+	*/
+	public function createEndpoint($deviceToken, $userId) {
+		try {
+			$params = [
+				'PlatformApplicationArn' => $this->$platformApplicationArn,
+				'Token' => $this->deviceToken,
+				'CustomUserData' => $userId,
+				'Attributes' => ['Enabled' => 'true'],
+			];
+
+			if(!$res = $this->snsClient->createPlatformEndpoint($params)) {
+				throw new \Exception($this->snsClient->getMessages()[0], 500);
+			}
+
+			$endpointArn = $res['EndpointArn'];
+			self::subscribeTopic($endpointArn);
+
+		} catch (SnsException $e) {
+			return $e->getMessage() . "\n";
+		}
+	}
+
+
+	/**
+	* トピックを作成し$endpointArnでサブスクライブする
+	*
+	* @param str $endpointArn
+	* @throws throw new Exception
+	* @return str $SubscriptionArn
+	*/
+	public function subscribeTopic($endpointArn) {
+		try {
+
+			//名前を付けてtopicを作成。
+			$topic = $this->snsClient->createTopic([
+			  'Name' => 'test-all-users',
+			]);
+
+			$params = [
+				'TopicArn' => $topic['TopicArn'],
+				'Protocol' => 'application',
+				'Endpoint' => $endpointArn,
+			];
+
+			if(!$res = $this->snsClient->subscribe($params)) {
+				throw new \Exception($this->snsClient->getMessages()[0], 500);
+			}
+
+		} catch (SnsException $e) {
+			return $e->getMessage() . "\n";
+		}
+	}
 
 
 
+	/**
+	* トピックにメッセージを配信する
+	*
+	* @param str $topicArn
+	* @throws throw new Exception
+	* @return str $SubscriptionArn
+	*/
+	public function publishTopic($topicArn, $message) {
+		try {
+			$result = $this->snsClient->publish([
+				'TopicArn' => $topicArn,
+				'MessageStructure' => 'json',
+				'Message' => json_encode([
+					'APNS_SANDBOX' => json_encode([
+						'aps' => [
+							'alert' => [
+								'title' => $title,
+								'body'  => $body,
+							],
+						]
+					]),
+				]),
+  			]);
+		} catch (SnsException $e) {
+			return false;
+		}
+	}
+}
 
-
-
-##### Q: Amazon SNS が送信する構造化通知メッセージのフォーマットは何ですか?
-
-HTTP、HTTPS、Email-JSON、および SQS トランスポートプロトコル経由の配信のために Amazon SNS が送信する通知メッセージは、シンプルな JSON オブジェクトで、以下の情報が含まれます。
-
-- MessageId: 共通のユニークな識別子。発行される各通知で一意です。
-- Timestamp: 通知が発行された時刻（GMT）。
-- TopicArn: このメッセージが発行されたトピック。
-- Type: 通知配信用「通知」に設定された、配信メッセージの種類。
-- UnsubscribeURL: このトピックからエンドポイントの登録を解除するためのリンク。これ以上通知を受け取らないようにします。
-- メッセージ: 発行者が受信するメッセージのペイロード（本体）。
-- Subject: 件名欄 – オプションのパラメータとして公開APIに含まれる場合、メッセージと共に呼び出します。
-- Signature: メッセージ、メッセージID、件名（存在する場合）、タイプ、タイムスタンプ、トピック値のBase64-エンコード 「SHA1withRSA」署名。
-- SignatureVersion: 使用される Amazon SNS 署名のバージョン。
-- 「Eメール」トランスポート経由で送信される通知メッセージには、発行者に受領されるペイロード（本体）のみが含まれます。
-
-
-デバイストークンを SNS に登録すると、SNS がそのトークンに対応するエンドポイントを作成します。トピックへ発行するのと同じように、トークンエンドポイントに発行できます。
-
+```
 
