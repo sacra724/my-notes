@@ -375,12 +375,14 @@ class SNSWrapper
 				'TopicArn' => $topicArn,
 				'MessageStructure' => 'json',
 				'Message' => json_encode([
+					'default' => $body,
 					'APNS_SANDBOX' => json_encode([
 						'aps' => [
 							'alert' => [
 								'title' => $title,
 								'body'  => $body,
 							],
+							'badge' => 1,
 						]
 					]),
 				]),
