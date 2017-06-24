@@ -11,7 +11,8 @@ AmazonSNSとAPNsを用いてトピック/エンドポイントによるプッシ
 
 ### 目次
 
-0. 前提条件
+0.前提条件
+
 1. デバイス トークンを取得する
 2. Amazon SNS Platform Applicationの作成
 3. SNSでトピックを設定
