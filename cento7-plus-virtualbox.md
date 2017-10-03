@@ -173,7 +173,6 @@ DEVICE=enp0s3
 ONBOOT=yes ☆
 PEERDNS=yes
 PEERROUTES=yes
-DNS=8.8.8.8 ☆
 
 $ vi ifcfg-enp0s8 (ホストオンリーアダプター)
 
@@ -192,29 +191,29 @@ NAME=enp0s8
 UUID=123123123-12123-123123-123123-123123123
 DEVICE=enp0s8
 ONBOOT=yes ☆
-IPADDR=192.168.56.102 ☆
+IPADDR=192.168.56.101 ☆
 PREFIX=32
-GATEWAY=192.168.56.1 ☆
-DNS=8.8.8.8 ☆
 
+## ここから先はitermで作業
 
+$ ssh <NEW_USER_NAME>@192.168.56.101
 
-# yum で色々入れる前の準備
+## yum で色々入れる前の準備
 
-$ yum -y update　←　インストール済パッケージの一括アップデート
+$ sudo yum -y update　←　インストール済パッケージの一括アップデート
 ※大量のパッケージのダウンロード／アップデートを行うため時間がかかる
 *つながらない時 [VirtualBoxのCentOS7(CUI)でブリッジ接続でインターネットに繋がらない時の対応](https://goo.gl/drnQRm)
 
-$ yum -y install yum-cron　←　yum-cronインストール
+$ sudo yum -y install yum-cron　←　yum-cronインストール
 
-$ vi /etc/yum/yum-cron.conf　←　yum-cron設定
+$ sudo vi /etc/yum/yum-cron.conf　←　yum-cron設定
 # Whether updates should be applied when they are available.  Note
 # that download_updates must also be yes for the update to be applied.
 apply_updates = yes　←　ダウンロード&アップデートを自動で行うようにする
 
-$ systemctl start yum-cron　←　パッケージ自動更新起動
+$ sudo systemctl start yum-cron　←　パッケージ自動更新起動
 
-$ systemctl enable yum-cron　←　パッケージ自動更新自動起動設定
+$ sudo systemctl enable yum-cron　←　パッケージ自動更新自動起動設定
 
-$ yum -y groupinstall base "Development tools"　←　ベース、開発ツールパッケージ群インストール
+$ sudo yum -y groupinstall base "Development tools"　←　ベース、開発ツールパッケージ群インストール
 ```
