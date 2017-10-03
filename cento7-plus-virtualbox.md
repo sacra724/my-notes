@@ -173,8 +173,7 @@ DEVICE=enp0s3
 ONBOOT=yes ☆
 PEERDNS=yes
 PEERROUTES=yes
-
-
+DNS=8.8.8.8 ☆
 
 $ vi ifcfg-enp0s8 (ホストオンリーアダプター)
 
@@ -196,6 +195,7 @@ ONBOOT=yes ☆
 IPADDR=192.168.56.102 ☆
 PREFIX=32
 GATEWAY=192.168.56.1 ☆
+DNS=8.8.8.8 ☆
 
 
 
@@ -203,6 +203,7 @@ GATEWAY=192.168.56.1 ☆
 
 $ yum -y update　←　インストール済パッケージの一括アップデート
 ※大量のパッケージのダウンロード／アップデートを行うため時間がかかる
+*つながらない時 [VirtualBoxのCentOS7(CUI)でブリッジ接続でインターネットに繋がらない時の対応](https://goo.gl/drnQRm)
 
 $ yum -y install yum-cron　←　yum-cronインストール
 
