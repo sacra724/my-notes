@@ -2,22 +2,13 @@
 
 ## とりあえず入れるもの
 
-* [git](git.md)
-* [NodeJs関連](NodeJs.md)
-* Mongo
-* [MySQL](MySQL.md)
+* [git]
+* [NodeJs関連]
+* [MySQL]
 * PHP関連
-	* [PHP](php.md)
-	* [Phalcon 2.x](Phalcon.md)
-	* phpMyAdmin
-* Ruby関連
-* [Nginx](Nginx.md)
-* [zsh関連](zsh.md)
-* memcached
-
-あとは各種各々必要なものはぐぐって入れる
-
-
+	* [PHP]
+* [Nginx]
+* [zsh関連]
 
 ## VirtualBoxの設定 (ローカル環境用メモ)
 
