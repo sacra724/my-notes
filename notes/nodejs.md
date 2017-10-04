@@ -12,7 +12,7 @@
 ](https://qiita.com/kota2_0/items/ec7dc77955ff0f45f06f)
 
 
-## nodebrew(nvm) インストール
+## nodebrew インストール
 
 ### nodebrewとは？
 node.jsのversionを管理ができるツール
